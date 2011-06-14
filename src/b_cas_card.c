@@ -605,23 +605,24 @@ static int connect_card(B_CAS_CARD_PRIVATE_DATA *prv, const char *reader_name)
 		SCardDisconnect(prv->card, SCARD_RESET_CARD);
 		prv->card = 0;
 	}
-	do {
-	  ret = SCardConnect(prv->mng, reader_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T1, &(prv->card), &protocol);
-	  if(ret == SCARD_W_UNRESPONSIVE_CARD){
-	    retry++;
-	    if(retry > 5)
-		return 0;
-	    rstat.szReader = reader_name;
-	    rstat.dwCurrentState = SCARD_STATE_MUTE|SCARD_STATE_PRESENT;
-	    rets = SCardGetStatusChange(prv->mng,300,&rstat,1);
-	    fprintf(stderr,"retry connect 0x%lx\n",rstat.dwEventState);
-	    if(rets != SCARD_S_SUCCESS){
-	      fprintf(stderr,"SCardGetStatusChange:(%s)\n",pcsc_stringify_error(rets));
-	    }
-	  }else{
+	rstat.szReader = reader_name;
+	rstat.dwCurrentState = SCARD_STATE_UNAWARE;
+	rets = SCardGetStatusChange(prv->mng,0,&rstat,1);
+	if(rets != SCARD_S_SUCCESS){
+	  return 0;
+	}
+	fprintf(stderr,"check card response 0x%lx\n",rstat.dwEventState);
+	while(rstat.dwEventState & SCARD_STATE_MUTE){
+	  rstat.dwCurrentState = rstat.dwEventState;
+	  rets = SCardGetStatusChange(prv->mng,300,&rstat,1);
+	  fprintf(stderr,"check card response 0x%lx\n",rstat.dwEventState);
+	  retry++;
+	  if(retry > 5)
 	    return 0;
-	  }
-	}while(ret !=SCARD_S_SUCCESS);
+	}
+	ret = SCardConnect(prv->mng, reader_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T1, &(prv->card), &protocol);
+	if(ret !=SCARD_S_SUCCESS)
+	   return 0;
 
 	m = sizeof(INITIAL_SETTING_CONDITIONS_CMD);
 	memcpy(prv->sbuf, INITIAL_SETTING_CONDITIONS_CMD, m);
