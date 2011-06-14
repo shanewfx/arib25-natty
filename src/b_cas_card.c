@@ -2,6 +2,7 @@
 #include "b_cas_card_error_code.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <math.h>
@@ -584,24 +585,43 @@ static int change_pwc_max(B_CAS_CARD_PRIVATE_DATA *prv, int max)
 
 static int connect_card(B_CAS_CARD_PRIVATE_DATA *prv, const char *reader_name)
 {
-	int m,n;
-	
 	LONG ret;
+
+	LONG rets;
+
+	int m,n;
+
+	int retry= 0;
+
 	DWORD rlen,protocol;
 
 	uint8_t *p;
 	
 	SCARD_IO_REQUEST sir;
 
+	SCARD_READERSTATE rstat;
+
 	if(prv->card != 0){
 		SCardDisconnect(prv->card, SCARD_RESET_CARD);
 		prv->card = 0;
 	}
-
-	ret = SCardConnect(prv->mng, reader_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T1, &(prv->card), &protocol);
-	if(ret != SCARD_S_SUCCESS){
+	do {
+	  ret = SCardConnect(prv->mng, reader_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T1, &(prv->card), &protocol);
+	  if(ret == SCARD_W_UNRESPONSIVE_CARD){
+	    retry++;
+	    if(retry > 5)
 		return 0;
-	}
+	    rstat.szReader = reader_name;
+	    rstat.dwCurrentState = SCARD_STATE_MUTE|SCARD_STATE_PRESENT;
+	    rets = SCardGetStatusChange(prv->mng,300,&rstat,1);
+	    fprintf(stderr,"retry connect %s:0x%lx\n",reader_name,rstat.dwEventState);
+	    if(rets != SCARD_S_SUCCESS){
+	      fprintf(stderr,"SCardConnect:(%s)\n",pcsc_stringify_error(rets));
+	    }
+	  }else{
+	    return 0;
+	  }
+	}while(ret !=SCARD_S_SUCCESS);
 
 	m = sizeof(INITIAL_SETTING_CONDITIONS_CMD);
 	memcpy(prv->sbuf, INITIAL_SETTING_CONDITIONS_CMD, m);

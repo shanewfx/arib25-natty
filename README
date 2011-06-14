@@ -2,3 +2,4 @@ arib25 natty
 
 1. 目標
  arib b25テストプログラムがubuntu/natty でsmartcardの初期化に失敗する場合がある問題への対応
+ うーん、kerneeのUSBドライバのせいな気がする
