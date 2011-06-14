@@ -1,0 +1,8 @@
+arib_std_b25.o: arib_std_b25.c arib_std_b25.h portable.h b_cas_card.h \
+ arib_std_b25_error_code.h multi2.h ts_common_types.h ts_section_parser.h
+b_cas_card.o: b_cas_card.c b_cas_card.h portable.h \
+ b_cas_card_error_code.h /usr/include/PCSC/winscard.h \
+ /usr/include/PCSC/pcsclite.h /usr/include/PCSC/wintypes.h
+multi2.o: multi2.c multi2.h portable.h multi2_error_code.h
+ts_section_parser.o: ts_section_parser.c ts_section_parser.h \
+ ts_common_types.h portable.h ts_section_parser_error_code.h
