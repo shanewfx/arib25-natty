@@ -614,9 +614,9 @@ static int connect_card(B_CAS_CARD_PRIVATE_DATA *prv, const char *reader_name)
 	    rstat.szReader = reader_name;
 	    rstat.dwCurrentState = SCARD_STATE_MUTE|SCARD_STATE_PRESENT;
 	    rets = SCardGetStatusChange(prv->mng,300,&rstat,1);
-	    fprintf(stderr,"retry connect %s:0x%lx\n",reader_name,rstat.dwEventState);
+	    fprintf(stderr,"retry connect 0x%lx\n",rstat.dwEventState);
 	    if(rets != SCARD_S_SUCCESS){
-	      fprintf(stderr,"SCardConnect:(%s)\n",pcsc_stringify_error(rets));
+	      fprintf(stderr,"SCardGetStatusChange:(%s)\n",pcsc_stringify_error(rets));
 	    }
 	  }else{
 	    return 0;
